@@ -4,15 +4,15 @@
 
 - [x] Read through the summaries example
 - [x] Read through the mm example
-- [] Check out the emb map
+- [x] Check out the emb map
 - [x] Extract from current data
 - [x] Extract startup name
 - [x] Extract founder names
-- [] Extract founder profiles (background, uni, etc)
-- [] Once provided data has been exhausted time to scrape
+- [x] Extract founder profiles (background, uni, etc)
+- [x] Once provided data has been exhausted time to scrape
 - [] Find company URLs
-- [] Find company socials from URL (twitter, linkedin)
-- [] Gather socials stats (followers, recent posts)
+- [x] Find company socials from URL (twitter, linkedin)
+- [x] Gather socials stats (followers, recent posts)
 - [] Crunchbase data, past funding (apparently also might be on their linkedin)
 
 ## Notes
