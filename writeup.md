@@ -30,4 +30,4 @@ Eventually I returned back to my original pipeline and report generator, go it c
 
 ### Delivery
 
-![Screenshot of the application](Screenshot%202025-05-27%20at%204.55.24%20PM.png)
+![Screenshot of the application](ui/my-app/public/Screenshot%202025-05-27%20at%204.55.24%20PM.png)
