@@ -26,3 +26,8 @@ Going back to read I wanted to focus on the 'map' part with the 3d projections, 
 ### Phase 3
 
 Eventually I returned back to my original pipeline and report generator, go it clean up, and converted to a streaming API.  Whipped up a UI and it is now a decent looking applicaiton where an investor can simply input a list of companies they want to compare, start a job, a bunch of asyncronous things happen including extracting data from summaries, compiling it, and writing it out to a clear single page comparison of all the companies, founders, differences, and recommendations.
+
+
+### Delivery
+
+![Screenshot of the application](Screenshot%202025-05-27%20at%204.55.24%20PM.png)
