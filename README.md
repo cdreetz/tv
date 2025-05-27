@@ -1,5 +1,23 @@
 # [REDACTED] Project
 
+
+## Getting Started
+
+- Backend
+```
+uv run uvicorn src.stream.api:app
+```
+
+- Frontend
+```
+cd ui/my-app
+npm install
+npm run dev
+```
+
+Enter a couple company names like 100ms, 11x.ai, 1stcollab
+Start it up
+
 ## TODOs
 
 - [x] Read through the summaries example
@@ -64,6 +82,11 @@
 - okay i am making an executive decision to scrap the 3d map stuff, just not a very intuitive way to find startups and more so with the fact that summaries are low quality for this task specifically and reprompting to generate new summaries is cost inhibitive 
 - going back to report generator thing
 - if i put myself in the shoes of an investor, do i want to try to navigate this weird map with a bunch of dots? hell no.  do i want to give some tool a single startup or even a list of startups and in return get a comprehensive overview of the startups, the founders, their market placements, their go to market strategies, comaprisons with similar startups?  hell yeah. (i think)
+
+#### 5.5hr
+- hail mary vibe code ui done and works very nicely
+
+
 
 #### Failures
 

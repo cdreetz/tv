@@ -55,6 +55,7 @@ export default function Page() {
   const [currentStatus, setCurrentStatus] = useState<PipelineStatus | null>(null)
   const [statuses, setStatuses] = useState<PipelineStatus[]>([])
   const [generatedReport, setGeneratedReport] = useState<ReportData | string | null>(null)
+  const [isCompleted, setIsCompleted] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -82,6 +83,7 @@ export default function Page() {
     
     setIsGenerating(true)
     setGeneratedReport(null)
+    setIsCompleted(false)
     // Don't reset statuses and currentStatus - let them persist
     // setStatuses([])
     // setCurrentStatus(null)
@@ -98,15 +100,80 @@ export default function Page() {
       try {
         const status: PipelineStatus = JSON.parse(event.data)
         setCurrentStatus(status)
-        setStatuses(prev => [...prev, status])
-
-        if (status.stage === "completion" && status.data) {
-          setGeneratedReport(status.data)
+        
+        if (status.stage === "completion") {
+          // When completion is reached, mark all previous stages as complete
+          setStatuses(prev => {
+            const updatedStatuses = [...prev]
+            
+            // Add the completion status
+            updatedStatuses.push(status)
+            
+            // Create a map of stages we've seen
+            const stageMap = new Map<string, PipelineStatus>()
+            updatedStatuses.forEach(s => {
+              stageMap.set(s.stage, s)
+            })
+            
+            // Define the typical pipeline stages in order
+            const expectedStages = [
+              "initialization",
+              "validation", 
+              "data_enrichment",
+              "data_enrichment_complete",
+              "data_extraction",
+              "similarity_analysis", 
+              "report_generation",
+              "completion"
+            ]
+            
+            // For any stage that exists but isn't completion, mark it as complete
+            const finalStatuses: PipelineStatus[] = []
+            expectedStages.forEach(stageName => {
+              if (stageMap.has(stageName)) {
+                const existingStatus = stageMap.get(stageName)!
+                if (stageName !== "completion" && existingStatus.stage !== "completion") {
+                  // Mark this stage as complete
+                  finalStatuses.push({
+                    ...existingStatus,
+                    stage: existingStatus.stage,
+                    message: existingStatus.message + " ✓",
+                    progress: 1.0
+                  })
+                } else {
+                  finalStatuses.push(existingStatus)
+                }
+              }
+            })
+            
+            // Add any other stages that weren't in our expected list
+            updatedStatuses.forEach(s => {
+              if (!expectedStages.includes(s.stage)) {
+                if (s.stage !== "completion") {
+                  finalStatuses.push({
+                    ...s,
+                    message: s.message + " ✓",
+                    progress: 1.0
+                  })
+                } else {
+                  finalStatuses.push(s)
+                }
+              }
+            })
+            
+            return finalStatuses
+          })
+          
+          setGeneratedReport(status.data || null)
           setIsGenerating(false)
+          setIsCompleted(true)
           eventSource.close()
         } else if (status.stage === "error") {
+          setStatuses(prev => [...prev, status])
           setIsGenerating(false)
           eventSource.close()
+        } else {
+          setStatuses(prev => [...prev, status])
         }
       } catch (error) {
         console.error('Error parsing SSE data:', error)
@@ -128,12 +195,12 @@ export default function Page() {
     }
   }, [])
 
-  const getStageIcon = (stage: string) => {
+  const getStageIcon = (stage: string, isCompleted: boolean = false) => {
+    if (isCompleted || stage === "completion" || stage === "data_enrichment_complete") {
+      return <CheckCircle className="h-4 w-4 text-green-600" />
+    }
+    
     switch (stage) {
-      case "completion":
-        return <CheckCircle className="h-4 w-4 text-green-600" />
-      case "data_enrichment_complete":
-        return <CheckCircle className="h-4 w-4 text-blue-600" />
       case "error":
         return <XCircle className="h-4 w-4 text-red-600" />
       default:
@@ -233,15 +300,15 @@ export default function Page() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        Generating Report
-                      </>
-                    ) : (
+                    {isCompleted ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-600" />
                         Report Generation Complete
+                      </>
+                    ) : (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Generating Report
                       </>
                     )}
                   </CardTitle>
@@ -265,7 +332,7 @@ export default function Page() {
 
                   {/* Current Status */}
                   <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
-                    {getStageIcon(currentStatus.stage)}
+                    {getStageIcon(currentStatus.stage, isCompleted)}
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">
@@ -289,7 +356,7 @@ export default function Page() {
                       <div className="max-h-32 overflow-y-auto space-y-1">
                         {statuses.slice(-5).reverse().map((status, index) => (
                           <div key={index} className="flex items-center gap-2 text-xs p-2 rounded bg-muted/30">
-                            {getStageIcon(status.stage)}
+                            {getStageIcon(status.stage, isCompleted && status.stage !== "completion")}
                             <span className="font-medium">{status.stage.replace(/_/g, ' ')}</span>
                             <span className="flex-1 truncate">{status.message}</span>
                             <span className="text-muted-foreground">
