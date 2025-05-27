@@ -7,12 +7,14 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 import anthropic
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, AsyncGenerator, Any
 from pydantic import BaseModel
+from .common import PipelineStatus
 
 load_dotenv()
 
 class FounderProfile(BaseModel):
+    """Profile of a company founder"""
     name: str
     past_companies: List[str] = []
     past_roles: List[str] = []
@@ -20,6 +22,7 @@ class FounderProfile(BaseModel):
     experience_summary: Optional[str] = None
 
 class StartupProfile(BaseModel):
+    """Profile of a startup company"""
     product_offering: Optional[str] = None
     differentiator: Optional[str] = None
     go_to_market_strategy: Optional[str] = None
@@ -36,12 +39,14 @@ class StartupProfile(BaseModel):
         str_strip_whitespace = True
 
 class CompanyExtraction(BaseModel):
+    """Extracted data about a company"""
     founders: List[FounderProfile] = []
     startup_profile: StartupProfile
     market_category: List[str] = []
     technology_stack: List[str] = []
 
 class MarketMap:
+    """Class for managing market map operations"""
     def __init__(self, use_existing_login=False):
         self.data_folder = "8d7b3ce6f4596ddf83d6d955017a8210/"
         self.company_llm_summaries = self.data_folder + "company_llm_summaries.json"
@@ -64,12 +69,15 @@ class MarketMap:
             self.claude_client = None
             print("WARNING: ANTHROPIC_API_KEY not found in environment variables")
 
-    async def extract_structured_data(self, company_summary: str) -> CompanyExtraction:
-        """Use Claude API to extract structured data from company summary"""
+    async def extract_structured_data_stream(self, company_summary: str) -> AsyncGenerator[PipelineStatus, None]:
+        """Use Claude API to extract structured data from company summary with streaming updates"""
         
         if not self.claude_client:
-            print("Claude client not initialized - check ANTHROPIC_API_KEY")
-            return CompanyExtraction(startup_profile=StartupProfile())
+            yield PipelineStatus("error", "Claude client not initialized - check ANTHROPIC_API_KEY", 0.0, 
+                               error="Claude client not initialized")
+            return
+        
+        yield PipelineStatus("claude_extraction", "Preparing Claude API request...", 0.1)
         
         extraction_prompt = f"""Extract structured information from this company summary. Be precise and only extract information that is explicitly stated.
 
@@ -95,11 +103,12 @@ class MarketMap:
                 "total_funding": "Amount raised if mentioned",
                 "target_market": "Target customers if mentioned",
                 "business_model": "Revenue model if mentioned",
-                "key_metrics": "Metrics like revenue, users if mentioned",
+                "key_metrics": "Single string with metrics like 'revenue: $4M, users: 100K' if mentioned",
                 "competitive_advantage": "Main competitive edge if mentioned"
             }},
             "market_category": ["category1", "category2"],
-            "technology_stack": ["tech1", "tech2"]
+            "technology_stack": ["tech1", "tech2"],
+            "key_terms": ["term1", "term2"]
         }}
 
         Market Category options: 
@@ -113,58 +122,123 @@ class MarketMap:
             - Chatbots
             - Agentic analytics
         - If not listed above, come up with a category that fits
-        
+
+        Key Terms options:
+        - brand
+        - science
+        - health
+        - education
+        - finance
+        - gaming
+        - media
+        - enterprise
+        - consumer
+        - developer
+        - analysis
+        - outreach
+
 
         Extract ALL explicitly mentioned companies and roles. Return only the JSON, no other text."""
 
         try:
-            print("Calling Claude API for structured extraction...")
+            yield PipelineStatus("claude_extraction", "Calling Claude API for structured extraction...", 0.3)
             response = self.claude_client.messages.create(
                 model="claude-3-5-sonnet-20241022",
                 max_tokens=2000,
                 messages=[{"role": "user", "content": extraction_prompt}]
             )
             
+            yield PipelineStatus("claude_extraction", "Received response from Claude API", 0.6)
+            
             response_text = response.content[0].text
-            print(f"Claude response: {response_text[:500]}...")
             
             # Extract JSON
             json_start = response_text.find('{')
             json_end = response_text.rfind('}') + 1
             
             if json_start == -1 or json_end == 0:
-                print("No JSON found in Claude response")
-                return CompanyExtraction(startup_profile=StartupProfile())
+                yield PipelineStatus("error", "No JSON found in Claude response", 0.0, 
+                                   error="No JSON found in Claude response")
+                return
             
+            yield PipelineStatus("claude_extraction", "Parsing JSON response...", 0.8)
             json_str = response_text[json_start:json_end]
             
             try:
                 extracted_data = json.loads(json_str)
+                
+                # Fix key_metrics if it's a dictionary instead of string
+                if 'startup_profile' in extracted_data and 'key_metrics' in extracted_data['startup_profile']:
+                    key_metrics = extracted_data['startup_profile']['key_metrics']
+                    if isinstance(key_metrics, dict):
+                        # Convert dictionary to formatted string
+                        metrics_parts = []
+                        for key, value in key_metrics.items():
+                            metrics_parts.append(f"{key}: {value}")
+                        extracted_data['startup_profile']['key_metrics'] = ", ".join(metrics_parts)
+                
                 result = CompanyExtraction(**extracted_data)
-                print(f"Structured data extraction successful: {len(result.founders)} founders found")
-                return result
+                yield PipelineStatus("claude_extraction", f"Structured data extraction successful: {len(result.founders)} founders found", 1.0, data=result.dict())
                 
             except json.JSONDecodeError as e:
-                print(f"JSON decode error: {e}")
-                return CompanyExtraction(startup_profile=StartupProfile())
+                yield PipelineStatus("error", f"JSON decode error: {e}", 0.0, error=f"JSON decode error: {e}")
                 
         except Exception as e:
-            print(f"Claude API error: {e}")
-            return CompanyExtraction(startup_profile=StartupProfile())
+            yield PipelineStatus("error", f"Claude API error: {e}", 0.0, error=f"Claude API error: {e}")
 
-    async def enrich_company_data(self, company_name: str) -> Dict:
-        """Enrich company data with structured extraction"""
+    async def extract_structured_data(self, company_summary: str) -> Dict:
+        """Use Claude API to extract structured data from company summary (non-streaming version)"""
+        async for status in self.extract_structured_data_stream(company_summary):
+            if status.stage == "claude_extraction" and status.data:
+                return status.data
+            elif status.stage == "error":
+                print(f"Claude API error: {status.error}")
+                return CompanyExtraction(startup_profile=StartupProfile()).dict()
+        
+        return CompanyExtraction(startup_profile=StartupProfile()).dict()
+
+    async def enrich_company_data_stream(self, company_name: str) -> AsyncGenerator[PipelineStatus, None]:
+        """Enrich company data with structured extraction with streaming updates"""
         if company_name not in self.companies:
-            return {}
+            yield PipelineStatus("error", f"Company {company_name} not found in database", 0.0, 
+                               error=f"Company {company_name} not found")
+            return
+        
+        yield PipelineStatus("data_preparation", f"Loading company data for {company_name}", 0.1)
         
         company_data = self.companies[company_name].copy()
         summary = company_data['company_summary']
         
-        print(f"Extracting structured data for {company_name}...")
-        structured_data = await self.extract_structured_data(summary)
+        yield PipelineStatus("data_preparation", f"Company summary loaded ({len(summary)} characters)", 0.2)
         
-        company_data['structured_data'] = structured_data.dict()
-        return company_data
+        # Stream the structured data extraction
+        structured_data = None
+        async for status in self.extract_structured_data_stream(summary):
+            # Re-emit the status with adjusted progress (0.2 to 0.9)
+            adjusted_progress = 0.2 + (status.progress * 0.7)
+            yield PipelineStatus(status.stage, status.message, adjusted_progress, status.data, status.error)
+            
+            if status.stage == "claude_extraction" and status.data:
+                structured_data = status.data
+            elif status.stage == "error":
+                return
+        
+        if structured_data:
+            company_data['structured_data'] = structured_data
+            yield PipelineStatus("completion", f"Data enrichment completed for {company_name}", 1.0, data=company_data)
+        else:
+            yield PipelineStatus("error", "Failed to extract structured data", 0.0, 
+                               error="Failed to extract structured data")
+
+    async def enrich_company_data(self, company_name: str) -> Dict:
+        """Enrich company data with structured extraction (non-streaming version)"""
+        async for status in self.enrich_company_data_stream(company_name):
+            if status.stage == "completion":
+                return status.data
+            elif status.stage == "error":
+                print(f"Error enriching {company_name}: {status.error}")
+                return {}
+        return {}
 
     async def get_social_links_from_url(self, url):
         """Extract social media links from a website"""

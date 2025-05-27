@@ -5,7 +5,7 @@ from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
-from big_scraper2 import MarketMap
+from src.big_scraper import MarketMap
 from dotenv import load_dotenv
 from typing import Dict, List
 
@@ -78,19 +78,19 @@ class MarketReportGenerator:
         
         # Generate report
         report = f"""
-# Market Analysis Report: {company_name}
+        # Market Analysis Report: {company_name}
 
-## Company Overview
-{enriched_data['company_summary']}
+        ## Company Overview
+        {enriched_data['company_summary']}
 
-## Founder Profiles
-"""
+        ## Founder Profiles
+        """
         
         if founders_info:
             for founder in founders_info:
                 report += f"""
-### {founder.get('name', 'Unknown')}
-"""
+                ### {founder.get('name', 'Unknown')}
+                """
                 if founder.get('past_companies'):
                     report += f"**Previous Companies:** {', '.join(founder['past_companies'])}\n"
                 if founder.get('past_roles'):
@@ -104,8 +104,8 @@ class MarketReportGenerator:
             report += "Founder information not clearly identified in available data.\n"
         
         report += f"""
-## Startup Profile
-"""
+        ## Startup Profile
+        """
         if startup_profile.get('product_offering'):
             report += f"**Product/Service:** {startup_profile['product_offering']}\n\n"
         if startup_profile.get('differentiator'):
@@ -124,25 +124,25 @@ class MarketReportGenerator:
             report += f"**Key Metrics:** {startup_profile['key_metrics']}\n\n"
         
         report += f"""
-## Market Positioning
-**Market Categories:** {', '.join(market_categories) if market_categories else 'General technology'}
+            ## Market Positioning
+            **Market Categories:** {', '.join(market_categories) if market_categories else 'General technology'}
 
-## Competitive Landscape
-The following companies operate in similar spaces:
+            ## Competitive Landscape
+            The following companies operate in similar spaces:
 
-"""
+        """
         
         for i, similar in enumerate(similar_companies, 1):
             report += f"""
-### {i}. {similar['name']} 
-**Similarity Score:** {similar['similarity_score']:.3f}
-**Brief:** {similar['summary'][:200]}...
+        ### {i}. {similar['name']} 
+        **Similarity Score:** {similar['similarity_score']:.3f}
+        **Brief:** {similar['summary'][:200]}...
 
-"""
+        """
         
         report += f"""
-## Social Media Presence
-"""
+        ## Social Media Presence
+        """
         if social_links:
             for platform, url in social_links.items():
                 report += f"**{platform.title()}:** {url}\n"
@@ -156,15 +156,15 @@ The following companies operate in similar spaces:
         experienced_founders = len([f for f in founders_info if f.get('past_companies')]) > 0
         
         report += f"""
-## Investment Considerations
-- **Market Position:** {'Well-differentiated' if has_clear_differentiator else 'Moderate differentiation'} in {', '.join(market_categories[:2]) if market_categories else 'technology'} space
-- **Competition Level:** {'High' if len(similar_companies) > 0 and similar_companies[0]['similarity_score'] > 0.3 else 'Moderate'} - {len(similar_companies)} similar companies identified
-- **Founder Experience:** {'Strong' if experienced_founders else 'Limited information available'} - {len([f for f in founders_info if f.get('past_companies')])} founders with notable backgrounds
-- **Funding Status:** {'Disclosed' if has_funding_info else 'Not available'}
-- **Competitive Advantage:** {competitive_advantage if competitive_advantage else 'Not clearly articulated'}
+        ## Investment Considerations
+        - **Market Position:** {'Well-differentiated' if has_clear_differentiator else 'Moderate differentiation'} in {', '.join(market_categories[:2]) if market_categories else 'technology'} space
+        - **Competition Level:** {'High' if len(similar_companies) > 0 and similar_companies[0]['similarity_score'] > 0.3 else 'Moderate'} - {len(similar_companies)} similar companies identified
+        - **Founder Experience:** {'Strong' if experienced_founders else 'Limited information available'} - {len([f for f in founders_info if f.get('past_companies')])} founders with notable backgrounds
+        - **Funding Status:** {'Disclosed' if has_funding_info else 'Not available'}
+        - **Competitive Advantage:** {competitive_advantage if competitive_advantage else 'Not clearly articulated'}
 
-*Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M')}*
-"""
+        *Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M')}*
+        """
         
         return report
     
@@ -196,20 +196,20 @@ The following companies operate in similar spaces:
         
         # Generate comparison report
         report = f"""
-# Competitive Analysis Report
+        # Competitive Analysis Report
 
-## Companies Analyzed
-{', '.join(valid_companies)}
+        ## Companies Analyzed
+        {', '.join(valid_companies)}
 
-## Founder Comparison
+        ## Founder Comparison
 
-"""
+        """
         
         for company_name in valid_companies:
             founders = all_founders[company_name]
             report += f"""
-### {company_name}
-"""
+        ### {company_name}
+        """
             if founders:
                 for founder in founders:
                     name = founder.get('name', 'Unknown')
@@ -226,15 +226,15 @@ The following companies operate in similar spaces:
         
         report += f"""
 
-## Product & Strategy Comparison
+        ## Product & Strategy Comparison
 
-"""
+        """
         
         for company_name in valid_companies:
             startup_profile = all_startup_profiles[company_name]
             report += f"""
-### {company_name}
-"""
+        ### {company_name}
+        """
             if startup_profile.get('product_offering'):
                 report += f"**Product:** {startup_profile['product_offering']}\n"
             if startup_profile.get('target_market'):
@@ -249,9 +249,9 @@ The following companies operate in similar spaces:
         
         report += f"""
 
-## Market Positioning Comparison
+        ## Market Positioning Comparison
 
-"""
+        """
         
         for company_name in valid_companies:
             categories = all_market_categories[company_name]
@@ -259,15 +259,15 @@ The following companies operate in similar spaces:
         
         report += f"""
 
-## Key Differentiators
+        ## Key Differentiators
 
-"""
+        """
         
         for company_name in valid_companies:
             startup_profile = all_startup_profiles[company_name]
             report += f"""
-### {company_name}
-"""
+        ### {company_name}
+        """
             differentiator = startup_profile.get('differentiator')
             competitive_advantage = startup_profile.get('competitive_advantage')
             
@@ -280,11 +280,11 @@ The following companies operate in similar spaces:
         
         report += f"""
 
-## Competitive Matrix
+        ## Competitive Matrix
 
-| Company | Market Focus | Product Offering | Key Strength | Funding Stage |
-|---------|--------------|------------------|--------------|---------------|
-"""
+        | Company | Market Focus | Product Offering | Key Strength | Funding Stage |
+        |---------|--------------|------------------|--------------|---------------|
+        """
         
         for company_name in valid_companies:
             categories = all_market_categories[company_name]
@@ -305,8 +305,8 @@ The following companies operate in similar spaces:
         
         report += f"""
 
-## Investment Insights
-"""
+        ## Investment Insights
+        """
         
         # Calculate insights
         # Get all non-empty market categories
@@ -324,13 +324,13 @@ The following companies operate in similar spaces:
         companies_with_experienced_founders = len([c for c in valid_companies if any(f.get('past_companies') for f in all_founders[c])])
         
         report += f"""
-- **Market Overlap:** {'High' if market_overlap else 'Low'} - Companies {'compete directly' if market_overlap else 'operate in different niches'}
-- **Differentiation Clarity:** {companies_with_differentiators}/{len(valid_companies)} companies have clear differentiation
-- **Funding Transparency:** {companies_with_funding}/{len(valid_companies)} companies have disclosed funding information
-- **Founder Experience:** {companies_with_experienced_founders}/{len(valid_companies)} companies have founders with notable previous experience
+        - **Market Overlap:** {'High' if market_overlap else 'Low'} - Companies {'compete directly' if market_overlap else 'operate in different niches'}
+        - **Differentiation Clarity:** {companies_with_differentiators}/{len(valid_companies)} companies have clear differentiation
+        - **Funding Transparency:** {companies_with_funding}/{len(valid_companies)} companies have disclosed funding information
+        - **Founder Experience:** {companies_with_experienced_founders}/{len(valid_companies)} companies have founders with notable previous experience
 
-## Strategic Recommendations
-"""
+        ## Strategic Recommendations
+        """
         
         # Generate strategic insights
         high_growth_indicators = []
@@ -367,8 +367,8 @@ The following companies operate in similar spaces:
             report += "\n"
         
         report += f"""
-*Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M')}*
-"""
+        *Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M')}*
+        """
         
         return report
 

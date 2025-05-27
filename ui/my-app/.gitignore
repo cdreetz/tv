@@ -1,27 +1,4 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
-
-# Virtual environments
-.venv
-.env
-
-
-browser_data/
-browser_data_fresh/
-twitter_data/
-
-
-8d7b3ce6f4596ddf83d6d955017a8210/
-claude_results.json
-claude_results_filtered.json
-new_umap_projections.csv
-
-
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
 /node_modules

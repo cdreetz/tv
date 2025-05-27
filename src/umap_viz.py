@@ -9,7 +9,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from umap import UMAP
 import dash
 from dash import dcc, html, Input, Output, callback
-from utils import process_summaries_with_claude
+from src.utils import process_summaries_with_claude
 
 
 class UMAPVisualizer:
