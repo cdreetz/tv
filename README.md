@@ -95,3 +95,8 @@ Start it up
 - mapped 3d projectionsk
 - used example market map to color different groups on the map
 - lots of low quality summaries, gonna rewrite summaries to actual product/offering summaries
+
+
+### What Else
+
+- the 3d projection/ embedding similarity search would be useful IF the summaries were better quality, in this case they are not and i think in a real world scenario we would have the list of URLS to each of these startups in which we could accurately scrape.  in this case we dont and trying to find the company websites based on only name is a challenge itself and unreliable

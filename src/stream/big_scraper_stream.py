@@ -97,6 +97,7 @@ class MarketMap:
             ],
             "startup_profile": {{
                 "product_offering": "What the company builds/offers",
+                "product_offering_short": "2-4 words that describe the company's product offering",
                 "differentiator": "What makes them unique if mentioned",
                 "go_to_market_strategy": "How they acquire customers if mentioned",
                 "stage_round": "Funding stage mentioned if mentioned",
@@ -108,7 +109,8 @@ class MarketMap:
             }},
             "market_category": ["category1", "category2"],
             "technology_stack": ["tech1", "tech2"],
-            "key_terms": ["term1", "term2"]
+            "key_terms": ["term1", "term2"],
+            "search_terms": ["term1", "term2"]
         }}
 
         Market Category options: 
@@ -136,7 +138,12 @@ class MarketMap:
         - developer
         - analysis
         - outreach
+        - sdr automation
+        - sales enablement
+        - marketing
+        - sales enablement
 
+        Search Terms should be a list of terms that are relevant to the company and the market category to be used to find similar companies.
 
         Extract ALL explicitly mentioned companies and roles. Return only the JSON, no other text."""
 
@@ -147,7 +154,8 @@ class MarketMap:
                 max_tokens=2000,
                 messages=[{"role": "user", "content": extraction_prompt}]
             )
-            
+
+            print(json.dumps(json.loads(response.content[0].text), indent=2))
             yield PipelineStatus("claude_extraction", "Received response from Claude API", 0.6)
             
             response_text = response.content[0].text
