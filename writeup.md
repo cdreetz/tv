@@ -30,5 +30,11 @@ Eventually I returned back to my original pipeline and report generator, go it c
 
 ### Delivery
 
+2 Modes: Discovery and Comparison
+
+Discovery: Input a single company, we extract information from the company summary, including just useful information as well as search terms to help find others similar.  Using the set of search terms find a candidate set, narrow that down, then finally prompt claude again with the input company summary plus the similar company summary to tell us the similarities but also key differentiators.
+
+Comparison: Given a subset of a market, possibly the output of the Discovery step, we do a more in depth comparative analysis on the companies, their offerings, the founder profiles, go-to-market strategies, and then provide both recommendations and warnings.
+
 ![Screenshot of the application](ui/my-app/public/Screenshot2.png)
 ![Screenshot of the application](ui/my-app/public/Screenshot.png)
