@@ -30,4 +30,5 @@ Eventually I returned back to my original pipeline and report generator, go it c
 
 ### Delivery
 
+![Screenshot of the application](ui/my-app/public/Screenshot2.png)
 ![Screenshot of the application](ui/my-app/public/Screenshot.png)
